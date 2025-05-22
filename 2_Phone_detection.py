@@ -7,7 +7,7 @@ CLIENT = InferenceHTTPClient(
     api_key="8G2COb6cc9JcTO6vsmKq"
 )
 
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 
 def resize_frame(frame, target_size=(640, 480)):
     return cv.resize(frame, target_size)
