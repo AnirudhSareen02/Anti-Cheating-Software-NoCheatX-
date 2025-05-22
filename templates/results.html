@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detection Result</title>
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+        }
+
+        .result-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+            width: 80%;
+            max-width: 800px;
+            text-align: left;
+        }
+
+        p {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #555;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        a {
+            margin-top: 30px;
+            font-size: 1.2em;
+            color: #2196F3;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Detection Result</h1>
+    <div class="result-container">
+        <p>{{ result | safe }}</p>
+    </div>
+    <a href="/">← Back to Dashboard</a>
+</body>
+</html>

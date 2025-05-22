@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Anti-Cheating Dashboard</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #111;
+      overflow: hidden;
+      color: white;
+      position: relative;
+    }
+
+    .shield-background {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 400px;
+      height: 400px;
+      background: url('shield_new.png') no-repeat center center / contain;
+      opacity: 0.3;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .moon-background {
+      position: fixed;
+      top: 20%;
+      right: 10%;
+      width: 200px;
+      height: 200px;
+      background: url('moon.png') no-repeat center center / contain;
+      opacity: 0.3;
+      pointer-events: none;
+      filter: drop-shadow(0 0 8px #aaddff);
+      z-index: 0;
+    }
+
+    #meteorCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 50px;
+    }
+
+    h1 {
+      color: #00ffff;
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 40px;
+      text-shadow: 0 0 8px #00ffff99;
+      text-align: center;
+    }
+
+    .btn-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      width: 320px;
+    }
+
+    button {
+      width: 100%;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, #f0f0f0, #111);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.3s ease, color 0.3s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+      color: #ddd;
+      box-shadow:
+        0 0 8px #00ffff,
+        0 0 15px #00ffff,
+        0 0 20px #00ffff,
+        0 0 30px #00ffff;
+    }
+    button::before {
+      content: "";
+      position: absolute;
+      top: -5px; left: -5px;
+      right: -5px; bottom: -5px;
+      border-radius: 15px;
+      border: 2px solid transparent;
+      background: linear-gradient(45deg, #00ffff, #004c4c, #00ffff, #004c4c);
+      background-size: 400% 400%;
+      animation: glowing 20s linear infinite;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: -1;
+    }
+    button:hover::before {
+      opacity: 1;
+    }
+
+    @keyframes glowing {
+      0% {background-position: 0% 0%;}
+      50% {background-position: 100% 100%;}
+      100% {background-position: 0% 0%;}
+    }
+
+    .btn-people { background: linear-gradient(135deg, #f9f9f9, #222); }
+    .btn-phone { background: linear-gradient(135deg, #eaeaea, #111); }
+    .btn-lip { background: linear-gradient(135deg, #ffffff, #000); }
+    .btn-sound { background: linear-gradient(135deg, #f0f0f0, #121212); }
+    .btn-signature { background: linear-gradient(135deg, #f5f5f5, #1a1a1a); }
+    .btn-same { background: linear-gradient(135deg, #fcfcfc, #111); }
+
+    .emoji {
+      font-size: 1.3em;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="shield-background"></div>
+  <div class="moon-background"></div>
+  <canvas id="meteorCanvas"></canvas>
+
+  <div class="content">
+    <h1>Anti-Cheating Dashboard</h1>
+    <div class="btn-container">
+      <button class="btn-people" onclick="runDetection('multiple')"><span class="emoji">👥</span> Run Multiple People Detection</button>
+      <button class="btn-phone" onclick="runDetection('phone')"><span class="emoji">📱</span> Run Phone Detection</button>
+      <button class="btn-lip" onclick="runDetection('lip_tracking')"><span class="emoji">👄</span> Run Lip Tracking</button>
+      <button class="btn-sound" onclick="runDetection('sound')"><span class="emoji">🎧</span> Run Sound Detection</button>
+      <button class="btn-signature" onclick="runDetection('signature')"><span class="emoji">✍️</span> Run Signature Match</button>
+      <button class="btn-same" onclick="runDetection('same_person')"><span class="emoji">👤</span> Run Same Person Verification</button>
+    </div>
+  </div>
+
+  <script>
+    function runDetection(type) {
+      window.location.href = `/results?type=${type}`;
+    }
+
+    const canvas = document.getElementById('meteorCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Meteor {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * width * 0.6;
+        this.y = Math.random() * -height;
+        this.len = 80 + Math.random() * 120;
+        this.speed = 4 + Math.random() * 5;
+        this.angle = (Math.PI / 4) + (Math.random() * 0.2 - 0.1);
+        this.size = 2 + Math.random() * 2;
+        this.opacity = 0.5 + Math.random() * 0.5;
+        this.colorStart = Math.random() < 0.5 ? 'rgba(255,255,255,' : 'rgba(150,200,255,';
+        this.colorEnd = this.colorStart === 'rgba(255,255,255,' ? 'rgba(255,255,255,0)' : 'rgba(150,200,255,0)';
+      }
+      update() {
+        this.x += this.speed * Math.cos(this.angle);
+        this.y += this.speed * Math.sin(this.angle);
+        this.opacity -= 0.005;
+        if (this.opacity <= 0) this.reset();
+      }
+      draw(ctx) {
+        ctx.beginPath();
+        const gradient = ctx.createLinearGradient(
+          this.x, this.y,
+          this.x - this.len * Math.cos(this.angle),
+          this.y - this.len * Math.sin(this.angle)
+        );
+        gradient.addColorStop(0, `${this.colorStart}${this.opacity})`);
+        gradient.addColorStop(1, this.colorEnd);
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = this.size;
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 8;
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(
+          this.x - this.len * Math.cos(this.angle),
+          this.y - this.len * Math.sin(this.angle)
+        );
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    class Star {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.opacity = Math.random() * 0.5 + 0.3;
+        this.delta = 0.01 + Math.random() * 0.02;
+        this.increasing = true;
+      }
+      update() {
+        if (this.increasing) {
+          this.opacity += this.delta;
+          if (this.opacity >= 1) this.increasing = false;
+        } else {
+          this.opacity -= this.delta;
+          if (this.opacity <= 0.3) this.increasing = true;
+        }
+      }
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${this.opacity})`;
+        ctx.shadowColor = 'white';
+        ctx.shadowBlur = 6;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    const meteors = Array.from({ length: 80 }, () => new Meteor());
+    const stars = Array.from({ length: 150 }, () => new Star());
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      stars.forEach(star => { star.update(); star.draw(ctx); });
+      meteors.forEach(meteor => { meteor.update(); meteor.draw(ctx); });
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
